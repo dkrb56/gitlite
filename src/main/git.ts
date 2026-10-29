@@ -1,19 +1,31 @@
 // Thin wrapper around the git CLI. Every public function takes the repo path first.
 import { execFile } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import type {
   Branch,
   Commit,
   DiffTarget,
   FileChange,
   FileChangeKind,
+  OpState,
+  PatchMode,
   RefLabel,
   RepoSnapshot,
+  ResolveSide,
+  StashEntry,
   WorkingStatus,
 } from '../shared/types';
 
 const RS = '\x1e'; // record separator
 const US = '\x1f'; // unit separator
 const MAX_COMMITS = 2000;
+
+/** Extra environment for every git call: the askpass bridge, set by main once its server runs. */
+let extraEnv: Record<string, string> = {};
+export function setExtraEnv(env: Record<string, string>): void {
+  extraEnv = env;
+}
 
 interface RunOptions {
   okCodes?: number[];
@@ -30,7 +42,8 @@ export function run(cwd: string, args: string[], opts: RunOptions = {}): Promise
         cwd,
         maxBuffer: 256 * 1024 * 1024,
         windowsHide: true,
-        env: { ...process.env, GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C', GIT_PAGER: 'cat' },
+        // GIT_EDITOR=true accepts default messages (merge --continue, rebase), so no editor ever opens.
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C', GIT_PAGER: 'cat', GIT_EDITOR: 'true', ...extraEnv },
       },
       (err, stdout, stderr) => {
         const code = (err as (NodeJS.ErrnoException & { code?: number | string }) | null)?.code;
@@ -82,16 +95,20 @@ export async function log(repo: string, remoteNames: Set<string>): Promise<Commi
   const format = ['%H', '%P', '%an', '%ae', '%aI', '%D', '%s', '%B'].join(US) + RS;
   let out: string;
   try {
+    // Not --all: that would also walk refs/stash and show every stash as a commit.
     out = await run(repo, [
       'log',
-      '--all',
+      'HEAD',
+      '--branches',
+      '--tags',
+      '--remotes',
       '--topo-order',
       `--max-count=${MAX_COMMITS}`,
       `--format=${format}`,
     ]);
   } catch (e) {
     // An unborn repository has nothing to log.
-    if (/does not have any commits yet|bad default revision/i.test(String(e))) return [];
+    if (/does not have any commits yet|bad default revision|ambiguous argument 'HEAD'|unknown revision/i.test(String(e))) return [];
     throw e;
   }
   const commits: Commit[] = [];
@@ -218,10 +235,157 @@ export async function branches(repo: string): Promise<Branch[]> {
 }
 
 export async function snapshot(repo: string): Promise<RepoSnapshot> {
-  const [st, br] = await Promise.all([status(repo), branches(repo)]);
+  const [st, br, stashes, op] = await Promise.all([status(repo), branches(repo), stashList(repo), opState(repo)]);
   const remoteNames = new Set(br.filter((b) => b.remote).map((b) => b.name));
   const commits = await log(repo, remoteNames);
-  return { commits, status: st, branches: br };
+  return { commits, status: st, branches: br, stashes, op };
+}
+
+// ---------- stashes ----------
+
+export async function stashList(repo: string): Promise<StashEntry[]> {
+  const out = await run(repo, ['stash', 'list', `--format=%gd${US}%s${US}%ci`]);
+  const list: StashEntry[] = [];
+  for (const line of out.split('\n')) {
+    const [ref, message, date] = line.replace(/\r$/, '').split(US);
+    const m = /^stash@\{(\d+)\}$/.exec(ref ?? '');
+    if (!m) continue;
+    list.push({ index: Number(m[1]), ref, message, date });
+  }
+  return list;
+}
+
+export async function stashPush(repo: string, message: string, includeUntracked: boolean): Promise<void> {
+  const args = ['stash', 'push'];
+  if (includeUntracked) args.push('--include-untracked');
+  if (message.trim()) args.push('-m', message.trim());
+  await run(repo, args);
+}
+
+export async function stashApply(repo: string, index: number, pop: boolean): Promise<string> {
+  // Exit 1 means the stash applied with conflicts; the files show up as conflicts in the status.
+  return run(repo, ['stash', pop ? 'pop' : 'apply', `stash@{${index}}`], { okCodes: [0, 1] });
+}
+
+export async function stashDrop(repo: string, index: number): Promise<void> {
+  await run(repo, ['stash', 'drop', `stash@{${index}}`]);
+}
+
+// ---------- merge / rebase / cherry-pick state ----------
+
+async function gitDir(repo: string): Promise<string> {
+  const dir = (await run(repo, ['rev-parse', '--git-dir'])).trim();
+  return path.isAbsolute(dir) ? dir : path.join(repo, dir);
+}
+
+async function exists(p: string): Promise<boolean> {
+  try {
+    await fs.stat(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readTrimmed(p: string): Promise<string | null> {
+  try {
+    return (await fs.readFile(p, 'utf8')).trim();
+  } catch {
+    return null;
+  }
+}
+
+export async function opState(repo: string): Promise<OpState | null> {
+  const dir = await gitDir(repo);
+  if (await exists(path.join(dir, 'rebase-merge'))) {
+    const head = await readTrimmed(path.join(dir, 'rebase-merge', 'head-name'));
+    return { kind: 'rebase', detail: head?.replace(/^refs\/heads\//, '') ?? null };
+  }
+  if (await exists(path.join(dir, 'rebase-apply'))) {
+    const head = await readTrimmed(path.join(dir, 'rebase-apply', 'head-name'));
+    return { kind: 'rebase', detail: head?.replace(/^refs\/heads\//, '') ?? null };
+  }
+  if (await exists(path.join(dir, 'MERGE_HEAD'))) {
+    return { kind: 'merge', detail: (await readTrimmed(path.join(dir, 'MERGE_HEAD')))?.slice(0, 7) ?? null };
+  }
+  if (await exists(path.join(dir, 'CHERRY_PICK_HEAD'))) {
+    return { kind: 'cherry-pick', detail: (await readTrimmed(path.join(dir, 'CHERRY_PICK_HEAD')))?.slice(0, 7) ?? null };
+  }
+  if (await exists(path.join(dir, 'REVERT_HEAD'))) {
+    return { kind: 'revert', detail: (await readTrimmed(path.join(dir, 'REVERT_HEAD')))?.slice(0, 7) ?? null };
+  }
+  return null;
+}
+
+/** Conflicts give exit code 1 with the explanation on stdout; the caller shows it and the status shows the files. */
+export async function merge(repo: string, branch: string): Promise<string> {
+  return run(repo, ['merge', '--no-edit', branch], { okCodes: [0, 1] });
+}
+
+export async function rebase(repo: string, onto: string): Promise<string> {
+  return run(repo, ['rebase', onto], { okCodes: [0, 1] });
+}
+
+export async function cherryPick(repo: string, hash: string): Promise<string> {
+  return run(repo, ['cherry-pick', hash], { okCodes: [0, 1] });
+}
+
+export async function opContinue(repo: string): Promise<string> {
+  const op = await opState(repo);
+  if (!op) return 'Nothing to continue.';
+  return run(repo, [op.kind, '--continue'], { okCodes: [0, 1] });
+}
+
+export async function opAbort(repo: string): Promise<void> {
+  const op = await opState(repo);
+  if (!op) return;
+  await run(repo, [op.kind, '--abort']);
+}
+
+/**
+ * Takes one side of conflicted files, then marks them resolved.
+ * During a rebase git swaps the meaning of ours/theirs; the renderer labels sides by branch, so swap back here.
+ */
+export async function resolve(repo: string, paths: string[], side: ResolveSide): Promise<void> {
+  if (!paths.length) return;
+  const op = await opState(repo);
+  const flag = op?.kind === 'rebase' ? (side === 'ours' ? '--theirs' : '--ours') : side === 'ours' ? '--ours' : '--theirs';
+  await run(repo, ['checkout', flag, '--', ...paths]);
+  await run(repo, ['add', '--', ...paths]);
+}
+
+export async function markResolved(repo: string, paths: string[]): Promise<void> {
+  if (!paths.length) return;
+  await run(repo, ['add', '--', ...paths]);
+}
+
+export async function readFile(repo: string, rel: string): Promise<string> {
+  return fs.readFile(path.join(repo, rel), 'utf8');
+}
+
+// ---------- tags ----------
+
+export async function createTag(repo: string, name: string, hash: string, message: string | null): Promise<void> {
+  const args = message ? ['tag', '-a', name, hash, '-m', message] : ['tag', name, hash];
+  await run(repo, args);
+}
+
+export async function deleteTag(repo: string, name: string): Promise<void> {
+  await run(repo, ['tag', '-d', name]);
+}
+
+export async function pushTag(repo: string, name: string): Promise<string> {
+  return run(repo, ['push', 'origin', `refs/tags/${name}`]);
+}
+
+// ---------- partial staging ----------
+
+export async function applyPatch(repo: string, patch: string, mode: PatchMode): Promise<void> {
+  const args = ['apply', '--whitespace=nowarn'];
+  if (mode === 'stage') args.push('--cached');
+  if (mode === 'unstage') args.push('--cached', '--reverse');
+  if (mode === 'discard') args.push('--reverse');
+  await run(repo, args, { input: patch });
 }
 
 // ---------- commit contents ----------
@@ -270,6 +434,9 @@ export async function diff(repo: string, target: DiffTarget): Promise<string> {
       return run(repo, ['diff', ...common, '--', target.path]);
     case 'untracked':
       return run(repo, ['diff', '--no-index', '--no-color', '--', '/dev/null', target.path], { okCodes: [0, 1] });
+    case 'conflict':
+      // The renderer shows the file with its conflict markers; git's combined diff is not useful here.
+      return readFile(repo, target.path);
   }
 }
 
@@ -313,10 +480,23 @@ export async function checkout(repo: string, branch: string, remote: boolean): P
   }
 }
 
+export async function checkoutCommit(repo: string, hash: string): Promise<void> {
+  await run(repo, ['checkout', '--detach', hash]);
+}
+
 export async function createBranch(repo: string, name: string, startPoint: string | null): Promise<void> {
   const args = ['checkout', '-b', name];
   if (startPoint) args.push(startPoint);
   await run(repo, args);
+}
+
+export async function deleteBranch(repo: string, name: string, remote: boolean): Promise<void> {
+  if (remote) {
+    const [origin, ...rest] = name.split('/');
+    await run(repo, ['push', origin, '--delete', rest.join('/')]);
+  } else {
+    await run(repo, ['branch', '-D', name]);
+  }
 }
 
 export async function fetch(repo: string): Promise<string> {

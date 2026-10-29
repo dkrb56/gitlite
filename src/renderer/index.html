@@ -13,6 +13,10 @@
       <aside id="sidebar">
         <div class="label">Repositories</div>
         <ul id="repo-list"></ul>
+        <div id="stash-section" hidden>
+          <div class="label" id="stash-label">Stashes</div>
+          <ul id="stash-list"></ul>
+        </div>
         <div id="sidebar-actions">
           <button id="btn-add-repo">+ Add repository</button>
           <button id="btn-settings">Settings</button>
@@ -39,17 +43,25 @@
             <div id="branch-pop" hidden>
               <input id="branch-query" type="text" placeholder="Find or create a branch" spellcheck="false" />
               <div id="branch-lists"></div>
+              <div class="pop-hint muted">Right-click a branch to merge, rebase or delete</div>
             </div>
           </div>
           <span id="ahead-behind"></span>
           <span class="spacer"></span>
           <span id="busy" hidden></span>
           <div id="remote-actions">
+            <button id="btn-stash" disabled>Stash</button>
             <button id="btn-fetch" disabled>Fetch</button>
             <button id="btn-pull" disabled>Pull</button>
             <button id="btn-push" disabled>Push</button>
           </div>
         </header>
+        <div id="op-strip" hidden>
+          <span id="op-text"></span>
+          <span class="spacer"></span>
+          <button id="op-continue" class="link">Continue</button>
+          <button id="op-abort" class="link danger">Abort</button>
+        </div>
 
         <div id="columns">
           <section id="col-middle">
@@ -66,7 +78,12 @@
           <section id="col-file" class="pane">
             <div id="file-head">
               <div id="file-title">No file selected</div>
-              <div id="file-where"></div>
+              <div id="file-right">
+                <div class="seg small" id="layout-seg">
+                  <button data-value="unified" title="Unified diff">Unified</button><button data-value="split" title="Side by side">Split</button>
+                </div>
+                <div id="file-where"></div>
+              </div>
             </div>
             <div id="diff-view" class="scroll"></div>
           </section>
@@ -87,6 +104,14 @@
           <span class="muted">Dates</span>
           <div class="seg" data-setting="dateStyle">
             <button data-value="relative">Relative</button><button data-value="absolute">Absolute</button>
+          </div>
+          <span class="muted">Diff layout</span>
+          <div class="seg" data-setting="diffLayout">
+            <button data-value="unified">Unified</button><button data-value="split">Side by side</button>
+          </div>
+          <span class="muted">Syntax colors</span>
+          <div class="seg" data-setting="highlight">
+            <button data-value="true">On</button><button data-value="false">Off</button>
           </div>
           <span class="muted">Diff text size</span>
           <div class="seg" data-setting="diffSize">
@@ -110,6 +135,20 @@
       </div>
     </div>
 
+    <div id="prompt" class="overlay" hidden>
+      <div class="sheet">
+        <div id="prompt-title" class="sheet-title"></div>
+        <div id="prompt-text" class="sheet-text"></div>
+        <input id="prompt-input" type="text" spellcheck="false" autocomplete="off" />
+        <label id="prompt-check-row" class="check-row" hidden><input id="prompt-check" type="checkbox" /> <span id="prompt-check-label"></span></label>
+        <div class="sheet-actions">
+          <button id="prompt-cancel" class="outline">Cancel</button>
+          <button id="prompt-ok" class="primary">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="menu" hidden></div>
     <div id="toast" hidden></div>
 
     <script type="module" src="./main.ts"></script>

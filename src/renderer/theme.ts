@@ -3,11 +3,15 @@
 export type Theme = 'light' | 'dark';
 export type DateStyle = 'relative' | 'absolute';
 
+export type DiffLayout = 'unified' | 'split';
+
 export interface Settings {
   theme: Theme;
   accent: string;
   dateStyle: DateStyle;
   diffSize: number; // px
+  diffLayout: DiffLayout;
+  highlight: boolean; // syntax colors in diffs
 }
 
 export const ACCENTS: { color: string; ink: string; inkDark: string; label: string }[] = [
@@ -17,7 +21,7 @@ export const ACCENTS: { color: string; ink: string; inkDark: string; label: stri
   { color: '#9a6fb8', ink: '#6f4a8c', inkDark: '#c9aee0', label: 'Plum' },
 ];
 
-export const DEFAULTS: Settings = { theme: 'dark', accent: '#5b86c2', dateStyle: 'relative', diffSize: 12.5 };
+export const DEFAULTS: Settings = { theme: 'dark', accent: '#5b86c2', dateStyle: 'relative', diffSize: 12.5, diffLayout: 'unified', highlight: true };
 
 const KEY = 'gitlite.settings';
 

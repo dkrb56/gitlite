@@ -38,7 +38,22 @@ without installation on 64-bit Windows.
 - Commit details: hash, author, date, parents (clickable), message, changed files.
 - Working copy: staged and unstaged lists, stage / unstage / discard per file or all,
   commit message box.
-- Unified diff with old/new line numbers for any file in a commit or the working copy.
+- Hunk and line staging: every hunk header in a working-copy diff has Stage / Unstage and
+  Discard buttons. Click changed lines (Shift-click for a range) to stage, unstage or discard
+  only those lines.
+- Unified or side-by-side diff with old/new line numbers, syntax colors for common languages,
+  for any file in a commit, a stash or the working copy.
+- Stash: the toolbar button stashes the working copy (optionally with untracked files). Stashes
+  are listed in the sidebar; select one to see its files and Apply, Pop or Drop it.
+- Merge, rebase, cherry-pick, tags: right-click a branch in the branch popover to merge it into
+  the current branch, rebase onto it, or delete it. Right-click a commit to cherry-pick it,
+  create a branch or tag there, check it out, copy its hash, or push and delete its tags.
+- Conflicts: a strip under the toolbar shows the merge, rebase or cherry-pick in progress with
+  Continue and Abort. Conflicted files show the markers colored and offer "Keep ours", "Take
+  theirs" and "Mark resolved".
+- Credential prompts: when git or ssh asks for a username, password, passphrase or host-key
+  confirmation, GitLite shows a sheet and passes the answer to git. Nothing is stored by GitLite;
+  git's own credential helper does that as usual.
 - Toolbar: branch pill with a popover to switch local or remote branches or create one, fetch, pull, push.
 - Settings sheet: light or dark theme, accent color, relative or absolute dates, diff text size. Saved in the app.
 - Draggable splitters between the middle column and the diff, and between graph and details.
@@ -60,10 +75,12 @@ All git operations shell out to the `git` executable on PATH. The history is cap
 
 ## Not included yet
 
-- Hunk or line staging (only whole files).
-- Stash, rebase, merge, cherry-pick, tags, and conflict resolution.
-- Side-by-side diff and syntax highlighting.
-- Credential prompts: pushes and pulls rely on a credential helper already set up for git.
+- Interactive rebase, squash and reword.
+- Submodules, worktrees and LFS.
+- A built-in merge editor: conflicts are resolved by taking one side or editing the file
+  elsewhere, then marking it resolved.
+- Syntax colors are per line, so a comment or string that spans lines loses its color after
+  the first line.
 
 ## License
 

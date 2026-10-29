@@ -305,3 +305,86 @@ table.diff tr.meta td { color: var(--muted); }
 
 @keyframes fadein { from { opacity: 0; transform: translate(var(--tx, 0), 4px); } to { opacity: 1; transform: translate(var(--tx, 0), 0); } }
 #toast { --tx: -50%; }
+
+/* ---------- stashes (sidebar) ---------- */
+#stash-section { margin-top: 10px; display: flex; flex-direction: column; min-height: 0; max-height: 40%; }
+#stash-section .label { padding: 0 10px 6px; }
+#stash-list { list-style: none; margin: 0; padding: 0; overflow: hidden auto; display: flex; flex-direction: column; gap: 2px; }
+#stash-list li { padding: 6px 10px; border-radius: 8px; cursor: default; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stash-list li:hover { background: var(--hover); }
+#stash-list li.selected { background: var(--sel); font-weight: 500; }
+#stash-list li .when { display: block; font-size: 11.5px; color: var(--muted); font-weight: 400; }
+
+/* ---------- operation strip (merge / rebase / cherry-pick in progress) ---------- */
+#op-strip {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 14px 10px; padding: 8px 14px;
+  background: var(--sel); border: 1px solid var(--border); border-radius: 10px; font-size: 13px;
+}
+#op-strip .link { font-size: 13px; }
+
+/* ---------- popover hint, context menu ---------- */
+.pop-hint { font-size: 11.5px; padding: 8px 10px 2px; }
+#menu {
+  position: fixed; z-index: 35; min-width: 200px;
+  background: var(--elev); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); padding: 6px; animation: fadein 0.12s ease-out;
+}
+#menu .item { padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: default; white-space: nowrap; }
+#menu .item:hover { background: var(--hover); }
+#menu .item.danger { color: var(--danger); }
+#menu .item.disabled { color: var(--muted); pointer-events: none; }
+#menu .sep { height: 1px; background: var(--border); margin: 6px 4px; }
+
+/* ---------- sheets: prompt, checkbox ---------- */
+#prompt .sheet { width: 400px; }
+#prompt input[type='text'] { width: 100%; }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+.check-row input { accent-color: var(--accent); }
+
+/* ---------- diff header toggle ---------- */
+#file-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.seg.small button { padding: 3px 8px; font-size: 12px; }
+
+/* ---------- diff: hunk actions, line picking, split view ---------- */
+.hunk-head { display: flex; align-items: center; gap: 12px; padding: 0 16px 0 8px; }
+.hunk-head .hunk-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hunk-head .hunk-actions { display: flex; gap: 10px; font-family: var(--sans); }
+.hunk-head .hunk-actions .link { font-size: 12px; }
+table.diff .selectable { cursor: pointer; }
+table.diff tr.selectable.picked td, table.diff td.picked { box-shadow: inset 3px 0 0 var(--accent); }
+table.diff tr.selectable.picked td.code, table.diff td.code.picked { filter: brightness(1.12); }
+table.diff.split td.code { width: 50%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: pre; }
+table.diff.split td.code.del { background: var(--del-bg); color: var(--del-fg); }
+table.diff.split td.code.add { background: var(--add-bg); color: var(--add-fg); }
+table.diff.split td.ln.del { background: var(--del-bg); }
+table.diff.split td.ln.add { background: var(--add-bg); }
+table.diff.split td.empty { background: var(--hover); opacity: 0.5; }
+table.diff.split td.code:first-of-type { border-right: 1px solid var(--border); }
+table.diff.split tr.pair td, table.diff.split tr.ctx td { background: transparent; }
+
+/* ---------- conflicts ---------- */
+.conflict-note { padding: 10px 16px; color: var(--muted); font-family: var(--sans); font-size: 13px; border-bottom: 1px solid var(--border); }
+table.diff.conflict tr.marker td { background: var(--hunk-bg); color: var(--hunk-fg); font-weight: 500; }
+table.diff.conflict tr.ours td { background: var(--add-bg); }
+table.diff.conflict tr.theirs td { background: var(--del-bg); }
+.files li .actions .link.resolve { color: var(--accent-ink); }
+
+/* ---------- syntax colors (highlight.js classes), muted to fit the calm palette ---------- */
+.hljs-comment, .hljs-quote { color: var(--muted); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in, .hljs-type { color: var(--accent-ink); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-meta .hljs-string { color: #2f6b3a; }
+.hljs-number, .hljs-symbol, .hljs-bullet { color: #8f5429; }
+.hljs-title, .hljs-title.function_, .hljs-title.class_, .hljs-section, .hljs-name { color: #6f4a8c; }
+.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable, .hljs-selector-attr, .hljs-selector-class, .hljs-selector-id, .hljs-property { color: #2f7258; }
+.hljs-meta, .hljs-tag, .hljs-doctag { color: var(--muted); }
+.hljs-deletion { color: var(--del-fg); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
+body.dark .hljs-string, body.dark .hljs-regexp, body.dark .hljs-addition, body.dark .hljs-meta .hljs-string { color: #a9d8ae; }
+body.dark .hljs-number, body.dark .hljs-symbol, body.dark .hljs-bullet { color: #ecb48e; }
+body.dark .hljs-title, body.dark .hljs-title.function_, body.dark .hljs-title.class_, body.dark .hljs-section, body.dark .hljs-name { color: #c9aee0; }
+body.dark .hljs-attr, body.dark .hljs-attribute, body.dark .hljs-variable, body.dark .hljs-template-variable, body.dark .hljs-selector-attr, body.dark .hljs-selector-class, body.dark .hljs-selector-id, body.dark .hljs-property { color: #8fd0b5; }
+/* Added and removed rows keep their own tint; token colors only shift the hue slightly there. */
+table.diff tr.add td.code .hljs-string, table.diff td.code.add .hljs-string { color: inherit; }
+table.diff tr.del td.code .hljs-string, table.diff td.code.del .hljs-string { color: inherit; }
