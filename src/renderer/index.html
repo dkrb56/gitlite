@@ -5,66 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
     <title>GitLite</title>
+    <!-- IBM Plex is bundled from @fontsource (imported in main.ts), so the app works offline. -->
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div id="app">
-      <header id="toolbar">
-        <span id="repo-title" class="muted">No repository selected</span>
-        <span class="spacer"></span>
-        <label class="branch-label">Branch <select id="branch-select" disabled></select></label>
-        <button id="btn-new-branch" disabled>New branch</button>
-        <span class="sep"></span>
-        <button id="btn-fetch" disabled>Fetch</button>
-        <button id="btn-pull" disabled>Pull</button>
-        <button id="btn-push" disabled>Push</button>
-        <span class="sep"></span>
-        <button id="btn-refresh" disabled>Refresh</button>
-        <span id="busy" class="busy" hidden></span>
-      </header>
+      <aside id="sidebar">
+        <div class="label">Repositories</div>
+        <ul id="repo-list"></ul>
+        <div id="sidebar-actions">
+          <button id="btn-add-repo">+ Add repository</button>
+          <button id="btn-settings">Settings</button>
+        </div>
+      </aside>
 
-      <div id="columns">
-        <aside id="col-repos" class="pane">
-          <div class="pane-title">Repositories</div>
-          <ul id="repo-list" class="list"></ul>
-          <div class="pane-footer"><button id="btn-add-repo">+ Add repository</button></div>
-        </aside>
-        <div class="splitter v" data-side="left"></div>
-
-        <section id="col-middle">
-          <div id="pane-graph" class="pane">
-            <div class="pane-title">History</div>
-            <div id="graph-scroll" class="scroll" tabindex="0">
-              <table id="graph-table"><tbody></tbody></table>
+      <div id="main">
+        <div id="empty" hidden>
+          <div class="empty-icon">
+            <svg width="24" height="24" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="1.1"><circle cx="3.5" cy="2.5" r="1.5"/><circle cx="3.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="4.5" r="1.5"/><path d="M3.5 4v4M8.5 6c0 2-5 1-5 2"/></svg>
+          </div>
+          <div class="empty-title">No repositories yet</div>
+          <div class="muted">Add a folder that contains a git repository. GitLite reads it with the git already installed on this computer.</div>
+          <button id="btn-add-repo-empty" class="primary">Add a repository</button>
+        </div>
+        <header id="toolbar">
+          <span id="repo-title"></span>
+          <div id="branch-wrap">
+            <button id="branch-pill" disabled>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--accent)" stroke-width="1.4"><circle cx="3.5" cy="2.5" r="1.5"/><circle cx="3.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="4.5" r="1.5"/><path d="M3.5 4v4M8.5 6c0 2-5 1-5 2"/></svg>
+              <span id="branch-name">No branch</span>
+              <span class="caret">▾</span>
+            </button>
+            <div id="branch-pop" hidden>
+              <input id="branch-query" type="text" placeholder="Find or create a branch" spellcheck="false" />
+              <div id="branch-lists"></div>
             </div>
           </div>
-          <div class="splitter h"></div>
-          <div id="pane-details" class="pane">
-            <div class="pane-title" id="details-title">Commit</div>
-            <div id="details" class="scroll"></div>
+          <span id="ahead-behind"></span>
+          <span class="spacer"></span>
+          <span id="busy" hidden></span>
+          <div id="remote-actions">
+            <button id="btn-fetch" disabled>Fetch</button>
+            <button id="btn-pull" disabled>Pull</button>
+            <button id="btn-push" disabled>Push</button>
           </div>
-        </section>
+        </header>
 
-        <div class="splitter v" data-side="right"></div>
-        <section id="col-file" class="pane">
-          <div class="pane-title" id="file-title">File</div>
-          <div id="diff-view" class="scroll"></div>
-        </section>
-      </div>
-
-      <footer id="statusbar"><span id="status-text" class="muted">Ready</span></footer>
-    </div>
-
-    <div id="modal" hidden>
-      <div class="modal-box">
-        <div id="modal-title" class="modal-title"></div>
-        <input id="modal-input" type="text" spellcheck="false" />
-        <div class="modal-actions">
-          <button id="modal-cancel">Cancel</button>
-          <button id="modal-ok" class="primary">OK</button>
+        <div id="columns">
+          <section id="col-middle">
+            <div id="pane-graph" class="pane">
+              <div class="pane-title label">History</div>
+              <div id="graph-scroll" class="scroll" tabindex="0"></div>
+            </div>
+            <div class="splitter h"></div>
+            <div id="pane-details" class="pane">
+              <div id="details" class="scroll"></div>
+            </div>
+          </section>
+          <div class="splitter v" data-side="right"></div>
+          <section id="col-file" class="pane">
+            <div id="file-head">
+              <div id="file-title">No file selected</div>
+              <div id="file-where"></div>
+            </div>
+            <div id="diff-view" class="scroll"></div>
+          </section>
         </div>
       </div>
     </div>
+
+    <div id="settings" class="overlay" hidden>
+      <div class="sheet">
+        <div class="sheet-title">Settings</div>
+        <div class="grid">
+          <span class="muted">Appearance</span>
+          <div class="seg" data-setting="theme">
+            <button data-value="light">Light</button><button data-value="dark">Dark</button>
+          </div>
+          <span class="muted">Accent</span>
+          <div class="swatches" data-setting="accent"></div>
+          <span class="muted">Dates</span>
+          <div class="seg" data-setting="dateStyle">
+            <button data-value="relative">Relative</button><button data-value="absolute">Absolute</button>
+          </div>
+          <span class="muted">Diff text size</span>
+          <div class="seg" data-setting="diffSize">
+            <button data-value="11.5">Small</button><button data-value="12.5">Default</button><button data-value="14">Large</button>
+          </div>
+          <span class="muted">Git</span>
+          <span id="git-version" class="muted" style="font-family: var(--mono); font-size: 12.5px">git on PATH</span>
+        </div>
+        <div class="sheet-actions"><button id="settings-done" class="primary">Done</button></div>
+      </div>
+    </div>
+
+    <div id="confirm" class="overlay" hidden>
+      <div class="sheet">
+        <div id="confirm-title" class="sheet-title"></div>
+        <div id="confirm-text" class="sheet-text"></div>
+        <div class="sheet-actions">
+          <button id="confirm-cancel" class="outline">Keep</button>
+          <button id="confirm-ok" class="destructive">Discard</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" hidden></div>
 
     <script type="module" src="./main.ts"></script>
   </body>

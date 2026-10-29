@@ -39,8 +39,9 @@ without installation on 64-bit Windows.
 - Working copy: staged and unstaged lists, stage / unstage / discard per file or all,
   commit message box.
 - Unified diff with old/new line numbers for any file in a commit or the working copy.
-- Toolbar: branch switcher (local and remote branches), new branch, fetch, pull, push.
-- Draggable splitters between the columns and between graph and details.
+- Toolbar: branch pill with a popover to switch local or remote branches or create one, fetch, pull, push.
+- Settings sheet: light or dark theme, accent color, relative or absolute dates, diff text size. Saved in the app.
+- Draggable splitters between the middle column and the diff, and between graph and details.
 - Up/Down arrows move the commit selection when the history pane has focus.
 - The view refreshes after every action and whenever the window regains focus.
 

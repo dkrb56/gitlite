@@ -31,38 +31,3 @@ export function clear(node: HTMLElement): void {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// Modal text prompt (window.prompt is not available in Electron).
-export function ask(title: string, placeholder = ''): Promise<string | null> {
-  const modal = $('modal');
-  const input = $<HTMLInputElement>('modal-input');
-  $('modal-title').textContent = title;
-  input.value = '';
-  input.placeholder = placeholder;
-  modal.hidden = false;
-  input.focus();
-  return new Promise((resolve) => {
-    const done = (value: string | null) => {
-      modal.hidden = true;
-      $('modal-ok').removeEventListener('click', ok);
-      $('modal-cancel').removeEventListener('click', cancel);
-      input.removeEventListener('keydown', key);
-      resolve(value);
-    };
-    const ok = () => done(input.value.trim() || null);
-    const cancel = () => done(null);
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') ok();
-      if (e.key === 'Escape') cancel();
-    };
-    $('modal-ok').addEventListener('click', ok);
-    $('modal-cancel').addEventListener('click', cancel);
-    input.addEventListener('keydown', key);
-  });
-}
