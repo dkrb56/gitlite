@@ -1,7 +1,7 @@
 {
   "name": "gitlite",
   "productName": "GitLite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A small visual git client",
   "main": "out/main/main.js",
   "private": true,

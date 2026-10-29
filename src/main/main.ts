@@ -2,14 +2,19 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import * as git from './git';
 import { RepoStore } from './repos';
+import { WindowStateStore } from './windowState';
 import type { DiffTarget, FileChange, IpcResult, RepoEntry } from '../shared/types';
 
 const store = new RepoStore(app.getPath('userData'));
+const windowState = new WindowStateStore(app.getPath('userData'));
 
 function createWindow(): void {
+  const saved = windowState.load();
   const win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    x: saved.x,
+    y: saved.y,
+    width: saved.width,
+    height: saved.height,
     minWidth: 900,
     minHeight: 500,
     backgroundColor: '#1e1f24',
@@ -22,6 +27,8 @@ function createWindow(): void {
     },
   });
   win.setMenuBarVisibility(false);
+  if (saved.maximized) win.maximize();
+  windowState.track(win);
 
   const devUrl = process.env.VITE_DEV_SERVER_URL;
   if (devUrl) {

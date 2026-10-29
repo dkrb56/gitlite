@@ -42,6 +42,7 @@ without installation on 64-bit Windows.
 - Toolbar: branch pill with a popover to switch local or remote branches or create one, fetch, pull, push.
 - Settings sheet: light or dark theme, accent color, relative or absolute dates, diff text size. Saved in the app.
 - Draggable splitters between the middle column and the diff, and between graph and details.
+- Window size, position and maximized state are remembered between starts.
 - Up/Down arrows move the commit selection when the history pane has focus.
 - The view refreshes after every action and whenever the window regains focus.
 
