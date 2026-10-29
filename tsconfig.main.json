@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "out",
     "types": ["node"]
   },
   "include": ["src/main", "src/preload", "src/shared"]

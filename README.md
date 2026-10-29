@@ -3,7 +3,13 @@
 A small visual git client. Three columns: repositories, history graph with commit
 details below it, and the selected file's diff.
 
-## Run
+## Download
+
+Get the newest build from [Releases](https://github.com/dkrb56/gitlite/releases/latest):
+
+- `GitLite-<version>-portable.exe` — Windows, no installation. Needs `git` on the PATH.
+
+## Run from source
 
 ```bash
 npm install
@@ -12,6 +18,17 @@ npm run dev
 
 `npm run dev` compiles the main process, starts Vite, and opens Electron against the
 dev server with DevTools detached. `npm start` builds everything and runs the built app.
+
+## Share as a portable exe
+
+Run `npm run dist`. It builds `dist\GitLite-<version>-portable.exe`: one file that runs
+without installation on 64-bit Windows.
+
+- The exe has no personal data and stores its repository list in the user's AppData folder.
+- The exe is not code-signed, so Windows SmartScreen can warn on the first start. Click
+  **More info**, then **Run anyway**.
+- Each start unpacks the app to a temporary folder, so it starts a few seconds slower than
+  running from source.
 
 ## Features
 
@@ -37,7 +54,7 @@ src/shared/    Types shared by all three
 ```
 
 All git operations shell out to the `git` executable on PATH. The history is capped at
-2000 commits.
+2000 commits. Compiled code goes to `out/`; `dist/` holds release builds only.
 
 ## Not included yet
 
@@ -45,3 +62,10 @@ All git operations shell out to the `git` executable on PATH. The history is cap
 - Stash, rebase, merge, cherry-pick, tags, and conflict resolution.
 - Side-by-side diff and syntax highlighting.
 - Credential prompts: pushes and pulls rely on a credential helper already set up for git.
+
+## License
+
+GitLite is released under the [MIT License](LICENSE). It includes open-source software
+from other projects; see [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt). Each build
+ships both files. GitLite does not include git itself; it runs the git installed on the
+computer.
