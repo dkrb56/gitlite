@@ -1,0 +1,47 @@
+# GitLite
+
+A small visual git client. Three columns: repositories, history graph with commit
+details below it, and the selected file's diff.
+
+## Run
+
+```bash
+npm install
+npm run dev
+```
+
+`npm run dev` compiles the main process, starts Vite, and opens Electron against the
+dev server with DevTools detached. `npm start` builds everything and runs the built app.
+
+## Features
+
+- Repository list, persisted in the app's user-data folder.
+- Commit graph with lanes, merges, and labels for HEAD, branches, remotes and tags.
+- "Uncommitted changes" row at the top of the graph when the working copy is dirty.
+- Commit details: hash, author, date, parents (clickable), message, changed files.
+- Working copy: staged and unstaged lists, stage / unstage / discard per file or all,
+  commit message box.
+- Unified diff with old/new line numbers for any file in a commit or the working copy.
+- Toolbar: branch switcher (local and remote branches), new branch, fetch, pull, push.
+- Draggable splitters between the columns and between graph and details.
+- Up/Down arrows move the commit selection when the history pane has focus.
+- The view refreshes after every action and whenever the window regains focus.
+
+## Layout
+
+```
+src/main/      Electron main process: window, IPC handlers, git CLI wrapper, repo store
+src/preload/   contextBridge that exposes window.git to the renderer
+src/renderer/  Plain TypeScript UI built by Vite (graph layout, diff rendering, panes)
+src/shared/    Types shared by all three
+```
+
+All git operations shell out to the `git` executable on PATH. The history is capped at
+2000 commits.
+
+## Not included yet
+
+- Hunk or line staging (only whole files).
+- Stash, rebase, merge, cherry-pick, tags, and conflict resolution.
+- Side-by-side diff and syntax highlighting.
+- Credential prompts: pushes and pulls rely on a credential helper already set up for git.
