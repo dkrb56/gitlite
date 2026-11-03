@@ -703,6 +703,34 @@ function parseSettingValue(k: keyof Settings, v: string): Settings[keyof Setting
   return v as never;
 }
 
+// ---------- updates ----------
+let updateUrl: string | null = null;
+async function initUpdates(): Promise<void> {
+  const status = $('update-status'), check = $<HTMLButtonElement>('btn-check-updates'), dl = $<HTMLButtonElement>('btn-download-update');
+  try { status.textContent = `GitLite ${await git.appVersion()}`; } catch { status.textContent = 'GitLite'; }
+  check.addEventListener('click', async () => {
+    check.disabled = true;
+    dl.hidden = true;
+    status.textContent = 'Checking…';
+    try {
+      const info = await git.checkUpdates();
+      if (info.newer) {
+        status.textContent = `GitLite ${info.latest} is available (you have ${info.current})`;
+        dl.textContent = info.url.endsWith('.exe') ? `Download ${info.variant === 'portable' ? 'portable exe' : 'installer'}` : 'Open release page';
+        dl.hidden = false;
+        updateUrl = info.url;
+      } else {
+        status.textContent = `GitLite ${info.current} is the newest version`;
+      }
+    } catch (e) {
+      status.textContent = `Could not check: ${errText(e)}`;
+    } finally {
+      check.disabled = false;
+    }
+  });
+  dl.addEventListener('click', () => { if (updateUrl) void git.openExternal(updateUrl).catch((e) => toast(errText(e), true)); });
+}
+
 // ---------- splitters ----------
 function initSplitters(): void {
   const root = document.documentElement, columns = $('columns');
@@ -727,6 +755,7 @@ async function init(): Promise<void> {
   applySettings(state.settings);
   renderSettings();
   initSplitters();
+  void initUpdates();
   git.onAskpass(onAskpass);
   const addRepo = async () => {
     const entry = await busy('Adding repository', () => git.addRepo());

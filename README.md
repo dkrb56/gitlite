@@ -7,7 +7,12 @@ details below it, and the selected file's diff.
 
 Get the newest build from [Releases](https://github.com/dkrb56/gitlite/releases/latest):
 
-- `GitLite-<version>-portable.exe` — Windows, no installation. Needs `git` on the PATH.
+- `GitLite-<version>-setup.exe` — Windows installer. Installs for the current user, adds a Start
+  menu shortcut, and can be removed from Settings > Apps.
+- `GitLite-<version>-portable.exe` — Windows, no installation.
+
+Both need `git` on the PATH. Settings > Updates > **Check for updates** looks at the newest
+release on GitHub and offers the matching download.
 
 ## Run from source
 
@@ -21,14 +26,16 @@ dev server with DevTools detached. `npm start` builds everything and runs the bu
 
 ## Share as a portable exe
 
-Run `npm run dist`. It builds `dist\GitLite-<version>-portable.exe`: one file that runs
+Run `npm run dist`. It builds two files in `dist\`: `GitLite-<version>-setup.exe`, an
+installer for the current user, and `GitLite-<version>-portable.exe`, one file that runs
 without installation on 64-bit Windows.
 
-- The exe has no personal data and stores its repository list in the user's AppData folder.
-- The exe is not code-signed, so Windows SmartScreen can warn on the first start. Click
+- Neither file has personal data. The repository list and settings live in the user's AppData
+  folder.
+- The files are not code-signed, so Windows SmartScreen can warn on the first start. Click
   **More info**, then **Run anyway**.
-- Each start unpacks the app to a temporary folder, so it starts a few seconds slower than
-  running from source.
+- The portable exe unpacks the app to a temporary folder at each start, so it starts a few
+  seconds slower than the installed version.
 
 ## Features
 

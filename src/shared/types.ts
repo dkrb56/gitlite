@@ -93,6 +93,15 @@ export interface AskpassRequest {
   prompt: string;
 }
 
+export interface UpdateInfo {
+  current: string;
+  latest: string; // newest release version, without the "v"
+  newer: boolean;
+  /** Release page, or the matching download (installer or portable) when the release has one. */
+  url: string;
+  variant: 'installed' | 'portable';
+}
+
 export interface GitApi {
   listRepos(): Promise<RepoEntry[]>;
   addRepo(): Promise<RepoEntry | null>;
@@ -135,6 +144,10 @@ export interface GitApi {
 
   onAskpass(cb: (req: AskpassRequest) => void): void;
   answerAskpass(id: string, value: string | null): void;
+
+  appVersion(): Promise<string>;
+  checkUpdates(): Promise<UpdateInfo>;
+  openExternal(url: string): Promise<void>;
 }
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string };

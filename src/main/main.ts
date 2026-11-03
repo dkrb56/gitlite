@@ -1,9 +1,10 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import * as git from './git';
 import { RepoStore } from './repos';
 import { WindowStateStore } from './windowState';
 import { AskpassServer } from './askpass';
+import { checkUpdates, REPO } from './updates';
 import type { DiffTarget, FileChange, IpcResult, PatchMode, RepoEntry, ResolveSide } from '../shared/types';
 
 const store = new RepoStore(app.getPath('userData'));
@@ -100,6 +101,14 @@ handle('git:pull', (repo: string) => git.pull(repo));
 handle('git:push', (repo: string) => git.push(repo));
 
 ipcMain.on('askpass:reply', (_event, id: string, value: string | null) => askpass.answer(id, value));
+
+handle('app:version', async () => app.getVersion());
+handle('app:checkUpdates', () => checkUpdates());
+// Only GitLite's own GitHub pages may be opened from the renderer.
+handle('app:openExternal', async (url: string) => {
+  if (!url.startsWith(`https://github.com/${REPO}/`)) throw new Error('Refused to open that address');
+  await shell.openExternal(url);
+});
 
 // Git and ssh ask for credentials through askpass.sh, which calls back into this process.
 async function startAskpass(): Promise<void> {

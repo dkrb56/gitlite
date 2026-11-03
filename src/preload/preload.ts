@@ -51,6 +51,10 @@ const api: GitApi = {
     ipcRenderer.on('askpass:prompt', (_event, req: AskpassRequest) => cb(req));
   },
   answerAskpass: (id, value) => ipcRenderer.send('askpass:reply', id, value),
+
+  appVersion: () => call('app:version'),
+  checkUpdates: () => call('app:checkUpdates'),
+  openExternal: (url) => call('app:openExternal', url),
 };
 
 contextBridge.exposeInMainWorld('git', api);

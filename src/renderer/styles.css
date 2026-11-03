@@ -336,6 +336,11 @@ table.diff tr.meta td { color: var(--muted); }
 #menu .item.disabled { color: var(--muted); pointer-events: none; }
 #menu .sep { height: 1px; background: var(--border); margin: 6px 4px; }
 
+/* ---------- settings: updates row ---------- */
+#update-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#update-row .link { font-size: 13px; }
+#update-row #btn-download-update { font-weight: 500; }
+
 /* ---------- sheets: prompt, checkbox ---------- */
 #prompt .sheet { width: 400px; }
 #prompt input[type='text'] { width: 100%; }
