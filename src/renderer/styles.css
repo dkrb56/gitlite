@@ -64,6 +64,16 @@ a:hover { text-decoration: underline; }
 .muted { color: var(--muted); }
 .spacer { flex: 1; }
 
+/* scrollbars: thin, no track, thumb in theme tokens */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--lane0); background-clip: padding-box;
+  border: 2px solid transparent; border-radius: 999px;
+  min-width: 28px; min-height: 28px;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--muted); }
+
 /* buttons: quiet by default */
 button {
   background: none; color: var(--fg);
